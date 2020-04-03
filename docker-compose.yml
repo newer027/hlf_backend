@@ -1,0 +1,129 @@
+version: '3.7'
+
+services:
+  web_contract:
+    build: ./app
+    command: gunicorn hello_django.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - ./app/:/usr/src/app/
+    ports:
+      - 8000:8000
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=foo
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=hello_django_dev
+      - SQL_USER=hello_django
+      - SQL_PASSWORD=hello_django
+      - SQL_HOST=db_contract
+      - SQL_PORT=5432
+      - DATABASE=postgres
+    depends_on:
+      - db_contract
+      - celery_contract
+      - rabbitmq
+
+  db_contract:
+    image: postgres:11.2-alpine
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=hello_django
+      - POSTGRES_PASSWORD=hello_django
+      - POSTGRES_DB=hello_django_dev
+
+  nginx:
+    build:
+      context: ./app
+      dockerfile: nginx.dockerfile
+    volumes:
+      - ./app/static:/usr/src/app/static
+      - ./app/mediafiles:/usr/src/app/mediafiles
+    ports:
+      - 8080:80
+    depends_on:
+      - web_contract
+
+  # golang:
+  #  image: jacob/hello_go
+  #  ports:
+  #    - 8081:8081
+
+  rabbitmq:
+    # Message broker for Celery
+    image: rabbitmq:3.7-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=celery_user
+      - RABBITMQ_DEFAULT_PASS=secret
+      - RABBITMQ_DEFAULT_VHOST=celery_app
+    ports:
+      # The rabbitMQ management plugin - running on http://localhost:15672
+      - "15672:15672"
+      - "5672:5672"
+
+  celery_contract:
+    # Python application which run the Celery worker
+    build:
+      context: ./app
+      dockerfile: celery.dockerfile
+    volumes:
+      - ./app/:/usr/src/app
+    environment:
+      - DEBUG=0
+      - SECRET_KEY=foo
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=hello_django_dev
+      - SQL_USER=hello_django
+      - SQL_PASSWORD=hello_django
+      - SQL_HOST=db_contract
+      - SQL_PORT=5432
+      - DATABASE=postgres
+    links:
+      - db_contract
+      - rabbitmq
+    depends_on:
+      - db_contract
+#      - beat_contract
+      - rabbitmq
+
+  beat_contract:
+    build:
+      context: ./app
+      dockerfile: beat.dockerfile
+    environment: 
+      - DEBUG=0
+      - SECRET_KEY=foo
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=hello_django_dev
+      - SQL_USER=hello_django
+      - SQL_PASSWORD=hello_django
+      - SQL_HOST=db_contract
+      - SQL_PORT=5432
+      - DATABASE=postgres
+    links:
+      - db_contract
+      - rabbitmq
+    depends_on:
+      - db_contract
+      - rabbitmq
+    volumes:
+      - ./app:/usr/src/app
+
+  flower_contract:
+    build:
+      context: ./app
+      dockerfile: flower.dockerfile
+    environment:
+      - DEBUG=0
+      - SECRET_KEY=foo
+    links:
+      - celery_contract
+      - rabbitmq
+    depends_on:
+      - celery_contract
+      - rabbitmq
+    ports:
+      - "5555:5555"
+
+# volumes:
+#  postgres_data:

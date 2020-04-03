@@ -1,0 +1,108 @@
+运单管理(列表)
+-------
+运单号
+日期时间
+货主
+货物名称
+重量
+体积
+运费
+运单状态
+上链ID
+单据类别
+路线名称
+
+上游流水单(区分异常/[不区分异常])(列表、[明细关联运单])
+-------
+流水号
+日期时间
+签约主体
+货主
+流水金额
+运单数量
+付款方式
+(流水单号)
+(匹配：正常/异常)
+
+下游流水单(区分异常/[不区分异常])(列表、[明细关联运单])
+-------
+流水号
+日期时间
+签约主体
+承运人
+流水金额
+发车单数量
+付款方式
+(流水单号)
+(匹配：正常/异常)
+
+运单<-->上游流水
+-------
+
+运单<-->下游流水
+-------
+
+发票管理(发票列表、[发票批次下的明细])
+-------
+发票号
+开票日期
+开票类型
+销方名称
+购方名称
+开票金额
+发票批次
+
+
+发票批次
+-------
+发票批次号
+总金额
+
+发票<-->发票批次
+-------
+
+
+from payment.models import TaskItem
+TaskItem.objects.all()
+TaskItem.objects.all().delete()
+
+http://localhost:8000/taskitem/
+http://localhost:8000/upperpayment/
+http://localhost:8000/lowerpayment/
+http://localhost:8000/invoice/
+http://localhost:8000/invoicebatch/
+http://localhost:8000/taskitem/
+http://localhost:8000/lowertotask/
+http://localhost:8000/uppertotask/
+
+
+router.register(r'taskitem', PaymentViews.TaskItemViewSet)
+router.register(r'upperpayment', PaymentViews.UpperPaymentViewSet)
+router.register(r'lowerpayment', PaymentViews.LowerPaymentViewSet)
+router.register(r'invoice', PaymentViews.InvoiceViewSet)
+router.register(r'invoicebatch', PaymentViews.InvoiceBatchViewSet)
+router.register(r'lowertotask', PaymentViews.LowerToTaskViewSet)
+router.register(r'uppertotask', PaymentViews.UpperToTaskViewSet)
+
+
+export function fetchLowerPayment(upper_pk) {
+  return request({
+    url: 'upperpayment/' + upper_pk + '/',
+    method: 'get'
+  })
+}
+
+export function fetchLowerPayment(lower_pk) {
+  return request({
+    url: 'lowerpayment/' + lower_pk + '/',
+    method: 'get'
+  })
+}
+
+export function fetchTaskitem(invoice_pk) {
+  return request({
+    url: 'invoice/' + invoice_pk + '/',
+    method: 'get'
+  })
+}
+

@@ -1,0 +1,25 @@
+[[source]]
+
+url = "https://mirrors.aliyun.com/pypi/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+django = "==2.2"
+gunicorn= "==19.9.0"
+djangorestframework = "==3.9.4"
+django-celery-results = "==1.0.1"
+celery = "==4.3.0"
+requests = "==2.18.1"
+django-filter = "*"
+openpyxl = "*"
+djangorestframework_simplejwt = "*"
+django-cors-headers = "*"
+
+[dev-packages]
+
+[requires]
+
+python_version = "3.6"
